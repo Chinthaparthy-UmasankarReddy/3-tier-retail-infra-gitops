@@ -17,9 +17,15 @@ spec:
     spec:
       containers:
       - name: web
-        image: 154290454465.dkr.ecr.ap-south-1.amazonaws.com/retail-frontend:latest # Replace with your ECR Repository URI
+        image: 154290454465.dkr.ecr.ap-south-1.amazonaws.com/retail-frontend:latest
         ports:
         - containerPort: 80
+        # 🔌 UPDATED: Environment Variables Added Here
+        env:
+        - name: REACT_APP_API_URL
+          value: "http://localhost:5000"
+        - name: NODE_BE_URL
+          value: "http://localhost:5000"
         resources:
           limits:
             cpu: "250m"
@@ -34,7 +40,7 @@ metadata:
   name: retail-frontend-service
   namespace: production
 spec:
-  type: NodePort # AWS ALB Ingress controller expects NodePort to route target traffic groups efficiently
+  type: NodePort 
   selector:
     app: retail-frontend
   ports:
@@ -49,7 +55,7 @@ metadata:
   namespace: production
   annotations:
     kubernetes.io/ingress.class: alb
-    alb.ingress.kubernetes.io/scheme: internet-facing # provisions a public-facing AWS ALB
+    alb.ingress.kubernetes.io/scheme: internet-facing 
     alb.ingress.kubernetes.io/target-type: ip
 spec:
   rules:
