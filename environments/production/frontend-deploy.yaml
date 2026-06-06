@@ -26,6 +26,8 @@ spec:
           value: "http://localhost:5000"
         - name: NODE_BE_URL
           value: "http://localhost:5000"
+        - name: API_URL
+          value: "http://localhost:5000"
         resources:
           limits:
             cpu: "250m"
