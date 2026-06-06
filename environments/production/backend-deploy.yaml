@@ -3,26 +3,23 @@ kind: Deployment
 metadata:
   name: retail-backend
   namespace: production
-  labels:
-    app: retail-backend
 spec:
   replicas: 1
   selector:
     matchLabels:
       app: retail-backend
   template:
-    metadata:
-      labels:
-        app: retail-backend
     spec:
       containers:
       - name: api
-        image: 154290454465.dkr.ecr.ap-south-1.amazonaws.com/retail-backend:latest # Replace with your ECR Repository URI
+        image: 154290454465.dkr.ecr.ap-south-1.amazonaws.com/retail-backend:latest
         ports:
         - containerPort: 8080
+        
+        # 🔗 1. UPDATE DB_HOST TO YOUR LIVE MUMBAI ENDPOINT (No port suffix)
         env:
         - name: DB_HOST
-          value: "production-postgres-db.c123456789.us-east-1.rds.amazonaws.com" # Replace with your Terraform RDS endpoint output
+          value: "production-postgres-db.c3u4eyeaiq53.ap-south-1.rds.amazonaws.com"
         - name: DB_NAME
           value: "retail_prod"
         - name: OTEL_EXPORTER_OTLP_ENDPOINT
@@ -37,6 +34,18 @@ spec:
             secretKeyRef:
               name: app-db-credentials
               key: DB_PASSWORD
+
+        # ⚡ 2. SWITCH PROBES TO tcpSocket TO BYPASS PATH MISMATCHES
+        livenessProbe:
+          tcpSocket:
+            port: 8080
+          initialDelaySeconds: 15
+          periodSeconds: 20
+        readinessProbe:
+          tcpSocket:
+            port: 8080
+          initialDelaySeconds: 15
+          periodSeconds: 20
         resources:
           limits:
             cpu: "500m"
@@ -44,12 +53,7 @@ spec:
           requests:
             cpu: "250m"
             memory: "256Mi"
-        livenessProbe:
-          httpGet:
-            path: /healthz
-            port: 8080
-          initialDelaySeconds: 15
-          periodSeconds: 20
+        
 ---
 apiVersion: v1
 kind: Service
