@@ -7,16 +7,18 @@ spec:
   replicas: 1
   selector:
     matchLabels:
-      app: retail-backend
+      app: retail-backend     # 🔍 1. The selector looks for this label
   template:
+    metadata:
+      # 🛠️ FIX: ADD THESE TWO LINES BACK IN PERFECTLY ALIGNED
+      labels:
+        app: retail-backend   # 🎯 2. MUST match the selector exactly!
     spec:
       containers:
       - name: api
         image: 154290454465.dkr.ecr.ap-south-1.amazonaws.com/retail-backend:latest
         ports:
         - containerPort: 8080
-        
-        # 🔗 1. UPDATE DB_HOST TO YOUR LIVE MUMBAI ENDPOINT (No port suffix)
         env:
         - name: DB_HOST
           value: "production-postgres-db.c3u4eyeaiq53.ap-south-1.rds.amazonaws.com"
@@ -34,8 +36,6 @@ spec:
             secretKeyRef:
               name: app-db-credentials
               key: DB_PASSWORD
-
-        # ⚡ 2. SWITCH PROBES TO tcpSocket TO BYPASS PATH MISMATCHES
         livenessProbe:
           tcpSocket:
             port: 8080
