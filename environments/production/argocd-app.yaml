@@ -1,0 +1,20 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: retail-3tier-production
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: 'https://github.com/your-org/retail-infra-gitops.git' # Replace with your repo link
+    targetRevision: HEAD
+    path: environments/production
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: production
+  syncPolicy:
+    automated:
+      prune: true      # Automatically deletes resources removed from Git
+      selfHeal: true   # Overwrites manual cluster overrides to prevent configuration drift
+    syncOptions:
+      - CreateNamespace=true
