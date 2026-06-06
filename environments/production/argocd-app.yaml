@@ -6,7 +6,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: 'https://github.com/your-org/retail-infra-gitops.git' # Replace with your repo link
+    repoURL: 'git@github.com:Chinthaparthy-UmasankarReddy/3-tier-retail-infra-gitops.git' # Replace with your repo link
     targetRevision: HEAD
     path: environments/production
   destination:
