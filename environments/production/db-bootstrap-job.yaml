@@ -1,0 +1,58 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: retail-db-bootstrap
+  namespace: production
+  annotations:
+    # 🔁 Crucial ArgoCD Hooks: This runs the job automatically during every git sync loop
+    argocd.argoproj.io/hook: Sync
+    # 🧹 Cleans up the pod automatically once the database initialization completes successfully
+    argocd.argoproj.io/hook-delete-policy: HookSucceeded
+spec:
+  template:
+    metadata:
+      name: retail-db-bootstrap
+    spec:
+      containers:
+      - name: bootstrap-engine
+        image: postgres:15-alpine
+        env:
+        - name: PGPASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: app-db-credentials
+              key: DB_PASSWORD
+        - name: DB_USER
+          valueFrom:
+            secretKeyRef:
+              name: app-db-credentials
+              key: DB_USER
+        command: ["/bin/sh", "-c"]
+        args:
+        - |
+          echo "Connecting to AWS RDS Instance..."
+          psql -h production-postgres-db.c3u4eyeaiq53.ap-south-1.rds.amazonaws.com \
+               -U "$DB_USER" -d retail_prod -c "
+          
+          -- 1. Structural Schema Generation
+          CREATE TABLE IF NOT EXISTS products (
+              id SERIAL PRIMARY KEY,
+              sku VARCHAR(50) UNIQUE NOT NULL,
+              name VARCHAR(255) NOT NULL,
+              description TEXT,
+              price NUMERIC(10, 2) NOT NULL,
+              image_url VARCHAR(512),
+              category VARCHAR(100)
+          );
+
+          -- 2. Declarative Inventory Seeding
+          INSERT INTO products (sku, name, description, price, image_url, category) VALUES
+          ('GROC-RICE-001', 'Premium Basmati Rice', 'Long-grain aromatic rice, perfect for biryani.', 149.00, 'https://images.unsplash.com/photo-1586201375761-83865001e31c', 'Groceries'),
+          ('GROC-OIL-002', 'Organic Sunflower Oil', '100% pure cold-pressed healthy cooking oil.', 195.00, 'https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5', 'Groceries'),
+          ('FRUIT-MNG-003', 'Fresh Alphonso Mangoes', 'Sweet and juicy seasonal mangoes (1 Dozen).', 450.00, 'https://images.unsplash.com/photo-1553279768-865429fa0078', 'Fruits'),
+          ('GROC-ATTA-004', 'Whole Wheat Atta (5kg)', 'High-fiber natural whole wheat flour.', 260.00, 'https://images.unsplash.com/photo-1509440159596-0249088772ff', 'Groceries')
+          ON CONFLICT (sku) DO NOTHING;
+          
+          "
+          echo "Database Bootstrap execution completed successfully!"
+      restartPolicy: OnFailure
